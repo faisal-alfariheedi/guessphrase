@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -15,65 +16,116 @@ class MainActivity : AppCompatActivity() {
     lateinit var top: TextView
     lateinit var bot: TextView
     lateinit var inin: EditText
+    lateinit var rv: RecyclerView
+    var input= ArrayList<String>()
+    var limitp=10
+    var limitl=10
+    var prag = arrayListOf("i ate apple","burgers are great","meat taste awesome","i am happy","i am strong","i am a programmer")
+    var prq=prag[(0..(prag.size-1)).random()]
+    var stared: String = ""
+    var con:Boolean =true
+    var old:String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         top=findViewById(R.id.tvtop)
         bot=findViewById(R.id.tvguess)
-        var input = ArrayList<String>()
         var add =findViewById<Button>(R.id.submit)
         inin =findViewById<EditText>(R.id.entry)
-        val rv= findViewById<RecyclerView>(R.id.rvMain)
-        var prag = arrayListOf("i ate apple","burgers are great","meat taste awesome","i am happy","i am strong","i am a programmer")
-        var limitp=10
-        var limitl=10
-        var prq=prag[(0..(prag.size-1)).random()]
-        var stared: String = ""
-        var con:Boolean =true
-        var old:String = ""
+        rv= findViewById<RecyclerView>(R.id.rvMain)
         rv.adapter = RVAdapter(input)
         rv.layoutManager = LinearLayoutManager(this)
         stared =starit(prq)
 
+
         add.setOnClickListener {
             if (!human_is_idiot()) {
-                if (limitp > 0 && con) {
-                    if (inin.text.toString() == prq) {
-                        input.add("your guess is correct")
-                        showAlertDialog("do you want to play again",1)
-                    } else {
-                        input.add("wrong guess: ${inin.text}")
-                        inin.hint = "guess a letter"
-                        limitp--
-                    }
-                    inin.text.clear()
-                }
-                if (limitl > 0 && !con) {
-                    if (inin.text.count() == 1) {
-                        if(!old.contains(inin.text.toString())) showAlertDialog("don`t guess old answer idiot",0)
-                        else {
-                            var i = lettercheck(prq, inin.text.toString())
-                            if (i.isNotEmpty()) {
-                                dstar(i, prq)
-                                input.add("found ${i.size} ${inin.text}(s)")
-                                input.add("$limitl guesses remaining")
-                                old += old + inin.text
-                                inin.hint="guess the phrase"
-                            } else showAlertDialog("it can`t be empty", 0)
-                        }
-                    }else showAlertDialog("one letter only",0)
-                    inin.text.clear()
+                when (con) {
 
+                    true -> {
+                        if (limitp > 0) {
+                            if (inin.text.toString() == prq) {
+                                input.add("your guess is correct")
+                                showAlertDialog("congrats do you want to play again", 1)
+                            } else {
+                                input.add("wrong guess: ${inin.text}")
+                                inin.hint = "guess a letter"
+                                limitp--
+                                con = !con
+                            }
+                            inin.text.clear()
+                        }
+                    }
+                    false -> {
+                        if (limitl > 0) {
+                            if (inin.text.toString().count() == 1) {
+                                if (old.contains(inin.text.toString())) showAlertDialog(
+                                    "don`t guess old answer idiot",
+                                    0
+                                )
+                                else {
+                                    var i = lettercheck(prq, inin.text.toString())
+                                    if (i.isNotEmpty()) {
+                                        dstar(i, prq)
+                                        input.add("found ${i.size} ${inin.text}(s)")
+                                        limitl--
+                                        input.add("$limitl guesses remaining")
+                                        old += old + inin.text.toString()
+                                        inin.hint = "Guess the full phrase"
+                                        con = !con
+
+                                    } else showAlertDialog("it can`t be empty", 0)
+                                }
+                            } else showAlertDialog("one letter only", 0)
+                            inin.text.clear()
+
+                        }
+                    }
                 }
-                if(limitl==0&&limitp==0)showAlertDialog("you lost",1)
+                if (limitl == 0 && limitp == 0) showAlertDialog("you lost", 1)
                 if (!stared.contains("*")) {
                     input.add("you win")
                 }
+
             }
             rv.adapter = RVAdapter(input)
+            rv.scrollToPosition(input.size-1)
         }
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("top",top.text.toString())
+        outState.putString("bot",bot.text.toString())
+        outState.putStringArrayList("input",input)
+        outState.putInt("limp",limitp)
+        outState.putInt("liml",limitl)
+        outState.putString("prq",prq)
+        outState.putString("stared",stared)
+        outState.putString("old",old)
+        outState.putBoolean("con",con)
+
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        top.text= savedInstanceState.getString("top")
+        bot.text=savedInstanceState.getString("bot")
+        input= savedInstanceState.getStringArrayList("input")!!
+        limitp=savedInstanceState.getInt("limp")
+        limitl=savedInstanceState.getInt("liml")
+        prq=savedInstanceState.getString("prq")!!
+        stared=savedInstanceState.getString("stared")!!
+        old = savedInstanceState.getString("old")!!
+        con =savedInstanceState.getBoolean("con")
+        rv.adapter = RVAdapter(input)
+        if(con){
+            inin.hint="Guess the full phrase"
+        }else inin.hint="Guess a letter"
+
+    }
+
     fun starit(prq: String):String{
         var star: String =""
         for(i in prq){
@@ -88,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     }
     fun lettercheck(prq: String,letter: String):ArrayList<Int> {
         var pos = ArrayList<Int>()
-        for(i in 0..prq.count()){
+        for(i in 0 until prq.count()){
             if(prq[i].toString() == letter) {
                 pos.add(i)
             }
@@ -99,9 +151,9 @@ class MainActivity : AppCompatActivity() {
     fun dstar(dd:ArrayList<Int>,prq:String){
         var dtext=top.text.toString().toCharArray()
         for (i in dd){
-            dtext[i]=prq[i]
+            dtext[i+8]=prq[i]
         }
-        top.text=dtext.toString()
+        top.text=dtext.joinToString("")
     }
     fun human_is_idiot():Boolean{
         if(inin.text.isEmpty()){
@@ -118,9 +170,15 @@ class MainActivity : AppCompatActivity() {
             // if the dialog is cancelable
             .setCancelable(false)
             // positive button text and action
-            .setPositiveButton("Yes", DialogInterface.OnClickListener {
-                    dialog, id -> this.recreate()
-            })
+            if(a==1)dialogBuilder.setPositiveButton("Yes", DialogInterface.OnClickListener {
+                    dialog, id ->  finish();
+                overridePendingTransition(0, 0);
+                startActivity(getIntent());
+                overridePendingTransition(0, 0);//this.recreate();input.clear();rv.adapter = RVAdapter(input);prq=prag[(0..(prag.size-1)).random()]
+                })
+                    else dialogBuilder.setPositiveButton("OK", DialogInterface.OnClickListener {
+                    dialog, id -> null
+                })
             // negative button text and action
             .setNegativeButton("No", DialogInterface.OnClickListener {
                     dialog, id -> dialog.cancel()
