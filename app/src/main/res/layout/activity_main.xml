@@ -32,6 +32,15 @@
             android:text="gussed letter :"
             android:textAlignment="center"
             android:textColor="@color/white" />
+        <TextView
+            android:id="@+id/scores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/black"
+            android:text="your score is : "
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

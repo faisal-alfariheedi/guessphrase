@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">guessphrase</string>
+    <string name="preference_guess_key">com.example.guessgame.PREFERENCE_FILE_KEY</string>
 </resources>
