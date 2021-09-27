@@ -1,7 +1,9 @@
 package com.example.guessphrase
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.DialogInterface
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.PersistableBundle
@@ -17,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var bot: TextView
     lateinit var inin: EditText
     lateinit var rv: RecyclerView
+    private lateinit var sp: SharedPreferences
     var input= ArrayList<String>()
     var limitp=10
     var limitl=10
@@ -25,10 +28,12 @@ class MainActivity : AppCompatActivity() {
     var stared: String = ""
     var con:Boolean =true
     var old:String = ""
+    var score = 0
+    lateinit var sc:TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        sc = findViewById(R.id.scores)
         top=findViewById(R.id.tvtop)
         bot=findViewById(R.id.tvguess)
         var add =findViewById<Button>(R.id.submit)
@@ -37,7 +42,14 @@ class MainActivity : AppCompatActivity() {
         rv.adapter = RVAdapter(input)
         rv.layoutManager = LinearLayoutManager(this)
         stared =starit(prq)
-
+        sp = this.getSharedPreferences(
+            getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        score = sp.getInt("myMessage",0).toInt()  // --> retrieves data from Shared Preferences
+        // We can save data with the following code
+        with(sp.edit()) {
+            putInt("myMessage", score)
+            apply()
+        }
 
         add.setOnClickListener {
             if (!human_is_idiot()) {
@@ -48,6 +60,8 @@ class MainActivity : AppCompatActivity() {
                             if (inin.text.toString() == prq) {
                                 input.add("your guess is correct")
                                 showAlertDialog("congrats do you want to play again", 1)
+                                score++
+                                sc.text=score.toString()
                             } else {
                                 input.add("wrong guess: ${inin.text}")
                                 inin.hint = "guess a letter"
@@ -85,6 +99,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (limitl == 0 && limitp == 0) showAlertDialog("you lost", 1)
                 if (!stared.contains("*")) {
+                    score++
+                    sc.text=score.toString()
                     input.add("you win")
                 }
 
